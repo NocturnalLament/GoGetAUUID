@@ -10,11 +10,14 @@ import (
 	"golang.design/x/clipboard"
 )
 
-func GetAmountToGenerate() int {
+func GetAmountToGenerate() (int, error) {
 	var amount int
 	fmt.Println("How many UUIDs would you like to generate?")
 	fmt.Scanln(&amount)
-	return amount
+	if amount <= 1 {
+		return -1, errors.New("invalid amount of UUIDs")
+	}
+	return amount, nil
 }
 
 func GenerateUUIDs(amount int) []string {
@@ -30,9 +33,11 @@ func PromptForUUIDSelection(uuids []string) (int, error) {
 	var selectID int
 	fmt.Println("Please select a UUID to use:")
 	var selectionNum int
-	fmt.Scanln(&selectionNum)
-	if selectionNum < 1 || selectionNum > len(uuids) {
-		return -1, errors.New("invalid UUID ID")
+	_, err := fmt.Scanln(&selectionNum)
+	if err != nil {
+		return -1, errors.New("invalid selection")
+	} else if selectionNum < 1 || selectionNum > len(uuids) {
+		return PromptForUUIDSelection(uuids)
 	}
 	selectID = selectionNum
 	return selectID, nil
@@ -66,7 +71,11 @@ func CopyUUIDToClipboard(uuid string) error {
 }
 
 func entry(gen *bool) {
-	amount := GetAmountToGenerate()
+	amount, amountgenerror := GetAmountToGenerate()
+	if amountgenerror != nil {
+		fmt.Println(amountgenerror)
+		return
+	}
 	uuids := GenerateUUIDs(amount)
 	PrintUUIDs(uuids)
 	selectID, err := PromptForUUIDSelection(uuids)
